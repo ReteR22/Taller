@@ -1,0 +1,19 @@
+node_modules/
+dist/
+.env
+*.env.local
+.turbo/
+logs/
+uploads/
+*.log
+
+# IDE
+.idea/
+.DS_Store
+
+# Prisma
+apps/api/prisma/migrations/
+
+# Build
+apps/web/dist/
+apps/api/dist/

@@ -1,0 +1,367 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MECHANIC
+  SUPPLIER
+}
+
+enum PartRequestStatus {
+  OPEN
+  QUOTED
+  CLOSED
+}
+
+enum FuelType {
+  GASOLINE
+  DIESEL
+  ELECTRIC
+  HYBRID
+  GNC
+}
+
+enum WorkOrderStatus {
+  PENDING
+  IN_PROGRESS
+  WAITING_PARTS
+  COMPLETED
+  DELIVERED
+  CANCELLED
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum DocumentType {
+  MANUAL
+  PROCEDURE
+  FAQ
+  BULLETIN
+  SPECIFICATION
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  password     String
+  name         String
+  role         Role          @default(MECHANIC)
+  avatar       String?
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  workOrders    WorkOrder[]
+  chats         Chat[]
+  activityLogs  ActivityLog[]
+  chatFolders   ChatFolder[]
+  partRequests  PartRequest[]
+  partQuotes    PartQuote[]
+  notifications Notification[]
+
+  @@map("users")
+  @@index([email])
+}
+
+model Client {
+  id        String    @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String?   @unique
+  phone     String
+  address   String?
+  dni       String?   @unique
+  notes     String?   @db.Text
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  vehicles  Vehicle[]
+
+  @@map("clients")
+  @@index([lastName, firstName])
+  @@index([phone])
+}
+
+model Vehicle {
+  id          String      @id @default(cuid())
+  clientId    String
+  brand       String
+  model       String
+  year        Int
+  plate       String      @unique
+  vin         String?     @unique
+  color       String?
+  engineType  String?
+  fuelType    FuelType    @default(GASOLINE)
+  mileage     Int?
+  notes       String?     @db.Text
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  client       Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  workOrders   WorkOrder[]
+  chats        Chat[]
+  partRequests PartRequest[]
+
+  @@map("vehicles")
+  @@index([clientId])
+  @@index([brand, model])
+}
+
+model WorkOrder {
+  id           String          @id @default(cuid())
+  number       String          @unique
+  vehicleId    String
+  mechanicId   String
+  status       WorkOrderStatus @default(PENDING)
+  description  String          @db.Text
+  diagnosis    String?         @db.Text
+  observations String?         @db.Text
+  entryDate    DateTime        @default(now())
+  deliveryDate DateTime?
+  laborCost    Decimal         @default(0) @db.Decimal(10, 2)
+  discount     Decimal         @default(0) @db.Decimal(10, 2)
+  tax          Decimal         @default(0) @db.Decimal(10, 2)
+  total        Decimal         @default(0) @db.Decimal(10, 2)
+  isPaid       Boolean         @default(false)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  vehicle      Vehicle         @relation(fields: [vehicleId], references: [id])
+  mechanic     User            @relation(fields: [mechanicId], references: [id])
+  parts        WorkOrderPart[]
+
+  @@map("work_orders")
+  @@index([vehicleId])
+  @@index([mechanicId])
+  @@index([status])
+  @@index([entryDate])
+}
+
+model Part {
+  id         String          @id @default(cuid())
+  name       String
+  code       String?         @unique
+  brand      String?
+  unit       String          @default("u")
+  price      Decimal         @db.Decimal(10, 2)
+  stock      Int             @default(0)
+  minStock   Int             @default(1)
+  category   String?
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  workOrders WorkOrderPart[]
+
+  @@map("parts")
+}
+
+model WorkOrderPart {
+  id          String    @id @default(cuid())
+  workOrderId String
+  partId      String?
+  name        String
+  quantity    Int
+  unitPrice   Decimal   @db.Decimal(10, 2)
+  subtotal    Decimal   @db.Decimal(10, 2)
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  part        Part?     @relation(fields: [partId], references: [id])
+
+  @@map("work_order_parts")
+  @@index([workOrderId])
+}
+
+model ChatFolder {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String
+  color     String?  @default("#EF4444")
+  icon      String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  chats     Chat[]
+
+  @@map("chat_folders")
+}
+
+model Chat {
+  id             String          @id @default(cuid())
+  title          String
+  userId         String
+  vehicleId      String?
+  folderId       String?
+  model          String          @default("claude-sonnet-4-20250514")
+  totalTokens    Int             @default(0)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  user           User            @relation(fields: [userId], references: [id])
+  vehicle        Vehicle?        @relation(fields: [vehicleId], references: [id])
+  folder         ChatFolder?     @relation(fields: [folderId], references: [id])
+  messages       Message[]
+  tags           ChatTag[]
+  vehicleContext VehicleContext?
+
+  @@map("chats")
+  @@index([userId])
+  @@index([updatedAt])
+}
+
+model Message {
+  id         String      @id @default(cuid())
+  chatId     String
+  role       MessageRole
+  content    String      @db.LongText
+  tokens     Int?
+  ragSources Json?
+  createdAt  DateTime    @default(now())
+  chat       Chat        @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+  @@index([chatId])
+}
+
+model VehicleContext {
+  id         String  @id @default(cuid())
+  chatId     String  @unique
+  brand      String
+  model      String
+  year       Int?
+  engineType String?
+  fuelType   String?
+  mileage    Int?
+  symptoms   String? @db.Text
+  notes      String? @db.Text
+  chat       Chat    @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@map("vehicle_contexts")
+}
+
+model Tag {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  color     String    @default("#3B82F6")
+  createdAt DateTime  @default(now())
+  chats     ChatTag[]
+
+  @@map("tags")
+}
+
+model ChatTag {
+  chatId String
+  tagId  String
+  chat   Chat   @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([chatId, tagId])
+  @@map("chat_tags")
+}
+
+model KnowledgeDocument {
+  id        String         @id @default(cuid())
+  title     String
+  type      DocumentType
+  brand     String?
+  model     String?
+  yearFrom  Int?
+  yearTo    Int?
+  content   String         @db.LongText
+  filePath  String?
+  isActive  Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  chunks    DocumentChunk[]
+
+  @@map("knowledge_documents")
+}
+
+model DocumentChunk {
+  id         String            @id @default(cuid())
+  documentId String
+  content    String            @db.Text
+  chunkIndex Int
+  embedding  Json?
+  metadata   Json?
+  document   KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("document_chunks")
+  @@index([documentId])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  details   Json?
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@map("activity_logs")
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model PartRequest {
+  id          String            @id @default(cuid())
+  title       String
+  description String            @db.Text
+  partCode    String?
+  brand       String?
+  quantity    Int               @default(1)
+  vehicleId   String?
+  status      PartRequestStatus @default(OPEN)
+  createdById String
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  vehicle     Vehicle?          @relation(fields: [vehicleId], references: [id])
+  createdBy   User              @relation(fields: [createdById], references: [id])
+  quotes      PartQuote[]
+
+  @@map("part_requests")
+  @@index([createdById])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model PartQuote {
+  id            String      @id @default(cuid())
+  partRequestId String
+  supplierId    String
+  price         Decimal     @db.Decimal(10, 2)
+  currency      String      @default("ARS")
+  deliveryDays  Int?
+  notes         String?     @db.Text
+  availability  Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  partRequest   PartRequest @relation(fields: [partRequestId], references: [id], onDelete: Cascade)
+  supplier      User        @relation(fields: [supplierId], references: [id])
+
+  @@map("part_quotes")
+  @@index([partRequestId])
+  @@index([supplierId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+  @@index([userId])
+  @@index([isRead])
+}

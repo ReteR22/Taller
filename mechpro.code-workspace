@@ -1,0 +1,156 @@
+{
+  "folders": [
+    { "name": "🔧 MechPro (Root)",   "path": "." },
+    { "name": "⚙️  API (Backend)",   "path": "apps/api" },
+    { "name": "🌐 Web (Frontend)",   "path": "apps/web" }
+  ],
+  "settings": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    },
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true,
+    "tailwindCSS.experimental.classRegex": [
+      ["cn\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
+    ],
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/.git": true,
+      "**/dist": true,
+      "**/.turbo": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true
+    },
+    "emmet.includeLanguages": { "typescript": "html" },
+    "editor.tabSize": 2,
+    "editor.rulers": [100]
+  },
+  "extensions": {
+    "recommendations": [
+      "esbenp.prettier-vscode",
+      "dbaeumer.vscode-eslint",
+      "bradlc.vscode-tailwindcss",
+      "prisma.prisma",
+      "Prisma.prisma",
+      "ms-vscode.vscode-typescript-next",
+      "formulahendry.auto-rename-tag",
+      "christian-kohler.path-intellisense",
+      "mikestead.dotenv",
+      "humao.rest-client",
+      "mtxr.sqltools",
+      "mtxr.sqltools-driver-mysql",
+      "eamodio.gitlens",
+      "PKief.material-icon-theme",
+      "zhuangtongfa.material-theme"
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "🚀 API (Debug Mode)",
+        "type": "node",
+        "request": "launch",
+        "runtimeExecutable": "node",
+        "runtimeArgs": ["--loader", "ts-node/esm"],
+        "args": ["${workspaceFolder}/apps/api/src/app.ts"],
+        "env": {
+          "NODE_ENV": "development"
+        },
+        "envFile": "${workspaceFolder}/apps/api/.env",
+        "sourceMaps": true,
+        "restart": true,
+        "console": "integratedTerminal",
+        "skipFiles": ["<node_internals>/**"]
+      },
+      {
+        "name": "🌐 Web (Vite Dev)",
+        "type": "chrome",
+        "request": "launch",
+        "url": "http://localhost:5173",
+        "webRoot": "${workspaceFolder}/apps/web/src"
+      },
+      {
+        "name": "🗄️  Prisma Studio",
+        "type": "node",
+        "request": "launch",
+        "runtimeExecutable": "npx",
+        "runtimeArgs": ["prisma", "studio"],
+        "cwd": "${workspaceFolder}/apps/api",
+        "console": "integratedTerminal"
+      }
+    ],
+    "compounds": [
+      {
+        "name": "🔥 Full Stack (API + Web)",
+        "configurations": ["🚀 API (Debug Mode)", "🌐 Web (Vite Dev)"]
+      }
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "🔥 Dev: Full Stack",
+        "type": "shell",
+        "command": "npm run dev",
+        "group": { "kind": "build", "isDefault": true },
+        "presentation": { "reveal": "always", "panel": "new" },
+        "problemMatcher": []
+      },
+      {
+        "label": "⚙️  Dev: API Only",
+        "type": "shell",
+        "command": "npm run dev:api",
+        "presentation": { "reveal": "always", "panel": "new" },
+        "problemMatcher": []
+      },
+      {
+        "label": "🌐 Dev: Web Only",
+        "type": "shell",
+        "command": "npm run dev:web",
+        "presentation": { "reveal": "always", "panel": "new" },
+        "problemMatcher": []
+      },
+      {
+        "label": "🗄️  DB: Migrate",
+        "type": "shell",
+        "command": "npm run db:migrate",
+        "presentation": { "reveal": "always", "panel": "shared" },
+        "problemMatcher": []
+      },
+      {
+        "label": "🌱 DB: Seed",
+        "type": "shell",
+        "command": "npm run db:seed",
+        "presentation": { "reveal": "always", "panel": "shared" },
+        "problemMatcher": []
+      },
+      {
+        "label": "🎨 DB: Prisma Studio",
+        "type": "shell",
+        "command": "npm run db:studio",
+        "presentation": { "reveal": "always", "panel": "new" },
+        "problemMatcher": []
+      },
+      {
+        "label": "🔄 DB: Reset + Seed",
+        "type": "shell",
+        "command": "npm run db:reset",
+        "presentation": { "reveal": "always", "panel": "shared" },
+        "problemMatcher": []
+      },
+      {
+        "label": "📦 Install All",
+        "type": "shell",
+        "command": "npm install",
+        "presentation": { "reveal": "always", "panel": "shared" },
+        "problemMatcher": []
+      }
+    ]
+  }
+}

@@ -1,0 +1,275 @@
+# MechPro API — REST Client para VS Code
+# Extensión requerida: humao.rest-client
+# Uso: click en "Send Request" sobre cada endpoint
+# ─────────────────────────────────────────────
+
+@baseUrl = http://localhost:3001/api
+@token = PEGAR_TOKEN_AQUI_DESPUES_DE_LOGIN
+
+###
+# ══════════════════════════════════════════════
+# HEALTH CHECK
+# ══════════════════════════════════════════════
+GET http://localhost:3001/health
+
+###
+# ══════════════════════════════════════════════
+# AUTH
+# ══════════════════════════════════════════════
+
+### Login Admin
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@mechpro.com",
+  "password": "admin123"
+}
+
+### Login Mecánico
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "mecanico@mechpro.com",
+  "password": "mecanico123"
+}
+
+### Get Me (perfil propio)
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+###
+# ══════════════════════════════════════════════
+# CLIENTES
+# ══════════════════════════════════════════════
+
+### Listar clientes
+GET {{baseUrl}}/clients?page=1&limit=10
+Authorization: Bearer {{token}}
+
+### Buscar clientes
+GET {{baseUrl}}/clients?q=carlos
+Authorization: Bearer {{token}}
+
+### Crear cliente
+POST {{baseUrl}}/clients
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "firstName": "Juan",
+  "lastName":  "Pérez",
+  "phone":     "+54 376 499-9999",
+  "email":     "juan.perez@email.com",
+  "address":   "Av. San Martín 1234, Posadas"
+}
+
+### Ver cliente por ID
+GET {{baseUrl}}/clients/PEGAR_ID_AQUI
+Authorization: Bearer {{token}}
+
+###
+# ══════════════════════════════════════════════
+# VEHÍCULOS
+# ══════════════════════════════════════════════
+
+### Listar vehículos
+GET {{baseUrl}}/vehicles?page=1&limit=10
+Authorization: Bearer {{token}}
+
+### Vehículos de un cliente
+GET {{baseUrl}}/vehicles?clientId=PEGAR_ID_AQUI
+Authorization: Bearer {{token}}
+
+### Crear vehículo
+POST {{baseUrl}}/vehicles
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "clientId":   "PEGAR_CLIENT_ID",
+  "brand":      "Honda",
+  "model":      "Civic",
+  "year":       2022,
+  "plate":      "ZZZ999",
+  "engineType": "1.5T",
+  "fuelType":   "GASOLINE",
+  "mileage":    15000
+}
+
+###
+# ══════════════════════════════════════════════
+# ÓRDENES DE TRABAJO
+# ══════════════════════════════════════════════
+
+### Listar todas las órdenes
+GET {{baseUrl}}/work-orders?page=1&limit=10
+Authorization: Bearer {{token}}
+
+### Filtrar por estado
+GET {{baseUrl}}/work-orders?status=IN_PROGRESS
+Authorization: Bearer {{token}}
+
+### Ver orden por ID
+GET {{baseUrl}}/work-orders/PEGAR_ID_AQUI
+Authorization: Bearer {{token}}
+
+### Crear orden de trabajo
+POST {{baseUrl}}/work-orders
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "vehicleId":    "PEGAR_VEHICLE_ID",
+  "mechanicId":   "PEGAR_MECHANIC_ID",
+  "description":  "Cambio de aceite y filtros + revisión frenos",
+  "diagnosis":    "Aceite degradado, pastillas de freno al 20%",
+  "laborCost":    4500,
+  "discount":     0,
+  "tax":          0,
+  "parts": [
+    { "name": "Aceite 5W30 Sintético 4L", "quantity": 1, "unitPrice": 6200 },
+    { "name": "Filtro de Aceite",          "quantity": 1, "unitPrice": 1200 },
+    { "name": "Pastillas Freno Delanteras","quantity": 1, "unitPrice": 8500 }
+  ]
+}
+
+### Cambiar estado de orden
+PATCH {{baseUrl}}/work-orders/PEGAR_ID_AQUI/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "COMPLETED"
+}
+
+### Marcar como pagado
+PATCH {{baseUrl}}/work-orders/PEGAR_ID_AQUI/payment
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "isPaid": true
+}
+
+### Exportar PDF (abre en browser)
+# GET {{baseUrl}}/work-orders/PEGAR_ID_AQUI/pdf
+# Authorization: Bearer {{token}}
+
+###
+# ══════════════════════════════════════════════
+# REPORTES
+# ══════════════════════════════════════════════
+
+### Resumen del dashboard
+GET {{baseUrl}}/reports/summary
+Authorization: Bearer {{token}}
+
+### Reporte mensual
+GET {{baseUrl}}/reports/monthly?year=2025&month=1
+Authorization: Bearer {{token}}
+
+### Ingresos por período
+GET {{baseUrl}}/reports/revenue?from=2025-01-01&to=2025-12-31
+Authorization: Bearer {{token}}
+
+### Top clientes
+GET {{baseUrl}}/reports/top-clients?limit=5
+Authorization: Bearer {{token}}
+
+###
+# ══════════════════════════════════════════════
+# IA — CHAT
+# ══════════════════════════════════════════════
+
+### Crear nueva conversación
+POST {{baseUrl}}/ai/chats
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Diagnóstico Toyota Corolla — vibración en ralentí",
+  "vehicleContext": {
+    "brand":      "Toyota",
+    "model":      "Corolla",
+    "year":       2020,
+    "engineType": "1.8L 2ZR-FAE",
+    "fuelType":   "GASOLINE",
+    "mileage":    68000,
+    "symptoms":   "Vibración en ralentí, alto consumo de combustible"
+  }
+}
+
+### Listar conversaciones
+GET {{baseUrl}}/ai/chats
+Authorization: Bearer {{token}}
+
+### Buscar conversaciones
+GET {{baseUrl}}/ai/chats?q=toyota
+Authorization: Bearer {{token}}
+
+### Ver chat con mensajes
+GET {{baseUrl}}/ai/chats/PEGAR_CHAT_ID
+Authorization: Bearer {{token}}
+
+### Enviar mensaje (NO funciona en REST client por streaming SSE)
+# Usar el frontend o Postman con soporte SSE
+# POST {{baseUrl}}/ai/chats/PEGAR_CHAT_ID/messages
+# Authorization: Bearer {{token}}
+# Content-Type: application/json
+# { "message": "Tengo el código P0300 y vibración en ralentí" }
+
+### Listar carpetas
+GET {{baseUrl}}/ai/folders
+Authorization: Bearer {{token}}
+
+### Crear carpeta
+POST {{baseUrl}}/ai/folders
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name":  "Toyota",
+  "color": "#EF4444"
+}
+
+### Listar tags
+GET {{baseUrl}}/ai/tags
+Authorization: Bearer {{token}}
+
+###
+# ══════════════════════════════════════════════
+# BASE DE CONOCIMIENTO (RAG)
+# ══════════════════════════════════════════════
+
+### Listar documentos
+GET {{baseUrl}}/knowledge
+Authorization: Bearer {{token}}
+
+### Agregar documento de conocimiento (solo ADMIN)
+POST {{baseUrl}}/knowledge
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title":   "Manual Motor Toyota 2ZR-FAE",
+  "type":    "MANUAL",
+  "brand":   "Toyota",
+  "model":   "Corolla",
+  "yearFrom": 2014,
+  "yearTo":   2023,
+  "content": "El motor 2ZR-FAE es un motor de 4 cilindros en línea de 1.8 litros.\n\nESPECIFICACIONES:\n- Cilindrada: 1798cc\n- Potencia: 140 cv a 6400 rpm\n- Par motor: 173 Nm a 4000 rpm\n- Sistema de combustible: Inyección directa e indirecta (D-4ST)\n- Torque de bujías: 18 Nm\n- Aceite recomendado: 0W-20 o 5W-30 sintético\n- Capacidad de aceite: 4.4 litros con filtro\n\nCÓDIGOS DE FALLA FRECUENTES:\n\nP0300 - Fallo de encendido aleatorio múltiple:\n- Causas: bujías desgastadas, bobinas defectuosas, inyectores sucios\n- Diagnóstico: verificar gap de bujías (1.0-1.1mm), test de compresión (mín 145 psi)\n\nP0420 - Eficiencia del catalizador baja:\n- Causas: catalizador envejecido, sonda lambda defectuosa\n- Diagnóstico: monitorear señal sonda lambda pre/post catalizador"
+}
+
+### Probar búsqueda RAG (solo ADMIN)
+POST {{baseUrl}}/knowledge/query
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "query": "P0300 fallo de encendido bujías",
+  "brand": "Toyota",
+  "model": "Corolla"
+}
